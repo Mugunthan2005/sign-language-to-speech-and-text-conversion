@@ -1,0 +1,128 @@
+#include "SoftwareSerial.h"
+#include <LiquidCrystal_I2C.h>
+#include <SoftwareSerial.h>
+
+SoftwareSerial SIM900A(2,3);
+SoftwareSerial mySerial(3,2);
+SoftwareSerial GSM(2, 3); //SIM800L Tx & Rx is connected to Arduino #8 & #9
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+const int btnPin = A0;
+int btnVal = 0;
+SoftwareSerial hc06(2,3);
+char phone_no[] = "+91xxxxxxxxx"; //change with phone number to sms
+int gasValue = A1;
+
+#define blue 2
+#define green 3
+#define red 4
+#define yellow 0
+
+unsigned int f;
+unsigned int g;
+unsigned int h;
+unsigned int a;
+unsigned int i;
+
+void setup() {
+    randomSeed(analogRead(0));
+    SIM900A.begin(9600);
+    Serial.begin(9600);
+    GSM.begin(9600);
+    pinMode(btnPin, INPUT_PULLUP);
+    hc06.begin(9600);
+    pinMode(blue, OUTPUT);
+    pinMode(green, OUTPUT);
+    pinMode(red, OUTPUT);
+    pinMode(yellow, OUTPUT);
+    
+    lcd.init();
+    lcd.backlight();
+    lcd.setCursor(0, 0);
+    lcd.print(" Welcome To");
+    lcd.setCursor(0, 1);
+    lcd.print("JustDoElectronic");
+    delay(3000);
+    lcd.clear();
+}
+
+void loop() {
+    btnVal = analogRead(btnPin);
+    f = analogRead(gasValue);
+    g = analogRead(2);
+    h = analogRead(3);
+    a = analogRead(0);
+    i = analogRead(4);
+
+    if (f <= 722) {
+        SendMessage("Plz Give Me food");
+        digitalWrite(blue, HIGH);
+        digitalWrite(green, LOW);
+        digitalWrite(red, LOW);
+        digitalWrite(yellow, LOW);
+        lcdMessage("Plz Give Me", " food ");
+        hc06.print("Plz Give Me food");
+    }
+    else if (g <= 722) {
+        SendMessage("Plz Give Me medicine");
+        digitalWrite(green, HIGH);
+        digitalWrite(blue, LOW);
+        digitalWrite(red, LOW);
+        digitalWrite(yellow, LOW);
+        lcdMessage("Plz Give Me", " medicine ");
+        hc06.print("Plz Give Me medicine");
+    }
+    else if (h <= 724) {
+        SendMessage("I'm not well");
+        digitalWrite(green, HIGH);
+        lcdMessage("I'm not", " well ");
+        hc06.print("I'm not well");
+    }
+    else if (a <= 722) {
+        callUp(phone_no);
+        digitalWrite(green, HIGH);
+        lcdMessage(" emergency", " ");
+        hc06.print("emergency");
+    }
+    else if (i <= 722) {
+        SendMessage("Sorry, I can't understand");
+        digitalWrite(green, HIGH);
+        lcdMessage("Sorry I don't", " understand");
+        hc06.print("Sorry I don't understand");
+    }
+    delay(200);
+}
+
+void SendMessage(String message) {
+    Serial.println("Sending Message please wait....");
+    SIM900A.println("AT+CMGF=1");
+    delay(1000);
+    SIM900A.println("AT+CMGS=\"" + String(phone_no) + "\"");
+    delay(1000);
+    SIM900A.println(message);
+    delay(100);
+    SIM900A.println((char)26);
+    Serial.println("Message sent successfully");
+}
+
+void callUp(char *number) {
+    GSM.print("ATD "); 
+    GSM.print(number); 
+    GSM.println(";"); 
+    delay(20000); 
+    GSM.println("ATH"); 
+    delay(100);
+}
+
+void lcdMessage(String line1, String line2) {
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print(line1);
+    lcd.setCursor(0, 1);
+    lcd.print(line2);
+    delay(3000);
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print(" If Anything");
+    lcd.setCursor(0, 1);
+    lcd.print(" You Want ");
+}
